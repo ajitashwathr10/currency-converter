@@ -20,12 +20,18 @@ interface ExchangeResponse {
 }
 
 export async function convertCurrency(from: string, to: string, amount: number) {
+    if(!from || !to || isNaN(amount) || amount <= 0) {
+        throw new Error("Invalid conversion parameters")
+    }
     try {
+        const encodedFrom = encodeURIComponent(from)
+        const encodedTo = encodeURIComponent(to)
+
         const response = await fetch(
             `https://api.apilayer.com/exchangerates_data/convert?from=${from}&to=${to}&amount=${amount}`,
             {
                 headers: {
-                    apikey: API_KEY!,  
+                    'apikey': API_KEY as string,  
                 },
                 cache: 'no-store',
             },
