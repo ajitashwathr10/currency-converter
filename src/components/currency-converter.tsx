@@ -16,6 +16,7 @@ import {
     SelectLabel,
 } from "@/components/ui/select"
 import {ThemeToggle} from "@/components/theme-toggle"
+import {Alert, AlertDescription} from "@/components/ui/alert"
 
 const FIAT_CURRENCIES = [
     {code: "USD", name: "US Dollar"},
@@ -39,14 +40,23 @@ export function CurrencyConverter() {
     const [toCurrency, setToCurrency] = useState("EUR")
     const [result, setResult] = useState<number | null>(null)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const handleConvert = async () => {
+        setError(null)
+        setResult(null)
+        const numAmount = Number(amount)
+        if(isNaN(numAmount) || numAmount <= 0) {
+            setError("Please enter a valid amount greater than 0")
+            return
+        }
         try {
             setLoading(true)
-            const data = await convertCurrency(fromCurrency, toCurrency, Number(amount))
+            const data = await convertCurrency(fromCurrency, toCurrency, numAmount);
             setResult(data.result)
-        } catch (error) {
-            console.error("Conversion error:", error)
+        } catch (err) {
+            console.error("Conversion error:", err)
+            setError(err instanceof Error ? err.message : "An error occurred while converting currency")
         } finally {
             setLoading(false)
         }
@@ -55,6 +65,7 @@ export function CurrencyConverter() {
     const handleSwap = () => {
         setFromCurrency(toCurrency)
         setToCurrency(fromCurrency)
+        setResult(null)
     }
 
     return (
@@ -64,6 +75,11 @@ export function CurrencyConverter() {
                 <ThemeToggle/>
             </CardHeader>
             <CardContent className = "space-y-4">
+                {error && (
+                    <Alert variant = "destructive" className = "py-2">
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
                 <div className = "space-y-2">
                     <label className = "text-sm font-medium">Amount</label>
                     <Input
@@ -72,6 +88,8 @@ export function CurrencyConverter() {
                         onChange = {(e) => setAmount(e.target.value)}
                         placeholder = "Enter amount"
                         className = "text-lg"
+                        min = "0.01"
+                        step = "0.01"
                     />
                 </div>
 
@@ -104,7 +122,7 @@ export function CurrencyConverter() {
                     </div>
 
                     <Button variant = "ghost" size = "icon" className = "h-10 w-10" onClick = {handleSwap}>
-                        <ArrowRightLeft className = "h-4 w-4" />
+                        <ArrowRightLeft className = "h-4 w-4"/>
                     </Button>
 
                     <div className = "space-y-2">
